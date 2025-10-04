@@ -6,3 +6,5 @@
 
 # It can state sources and summarize things. https://www.youtube.com/watch?v=yvXcu38rBU4
 
+# For the AI, it's important that the data can be summarized. Code made in python is used to add this to search engine. This boasts a higher score for judges.
+

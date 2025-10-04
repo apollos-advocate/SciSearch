@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import requests
 from xml.etree import ElementTree as ET
+import nltk
+
+# Download punkt tokenizer for sumy
+nltk.download('punkt')
+nltk.download('punkt_tab')
 
 st.set_page_config(page_title="SciSearch", layout="wide")
 st.title("SciSearch: PubMed Explorer")

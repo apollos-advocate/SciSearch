@@ -4,6 +4,14 @@ import requests
 from xml.etree import ElementTree as ET
 import nltk
 
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer
+
+# Import your NASA ADS wrapper
+from nasa_ads import fetch_nasa_ads
+
+# Ensure NLTK resources are downloaded
 def ensure_nltk_resource(resource_name):
     try:
         nltk.data.find(f'tokenizers/{resource_name}')
@@ -12,15 +20,6 @@ def ensure_nltk_resource(resource_name):
 
 ensure_nltk_resource('punkt')
 ensure_nltk_resource('punkt_tab')
-
-st.set_page_config(page_title="SciSearch", layout="wide")
-st.title("SciSearch: PubMed Explorer")
-st.markdown("Search life sciences studies related to space and get AI-generated summaries.")
-
-# --- Summarizer ---
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
-from sumy.summarizers.lsa import LsaSummarizer  
 
 # Initialize summarizer once
 summarizer = LsaSummarizer()
@@ -63,31 +62,50 @@ def fetch_pubmed(query, max_results=10):
         })
     return records
 
-# --- User Search Input ---
+# --- Streamlit App ---
+
+st.set_page_config(page_title="SciSearch: PubMed + NASA ADS Explorer", layout="wide")
+st.title("SciSearch: PubMed + NASA ADS Explorer")
+st.markdown("Search life sciences studies related to space from PubMed and NASA ADS with AI-generated summaries.")
+
 search_term = st.text_input("Enter your search term (e.g., 'microgravity muscle atrophy')")
 
-if st.button("Search PubMed"):
-    with st.spinner("Searching PubMed and summarizing results..."):
-        results = fetch_pubmed(search_term, max_results=15)
-        if results:
-            df = pd.DataFrame(results)
+if st.button("Search Both Databases"):
+    with st.spinner("Searching PubMed and NASA ADS, then summarizing results..."):
+        # Fetch PubMed results
+        pubmed_results = fetch_pubmed(search_term, max_results=15)
+        
+        # Fetch NASA ADS results using token from secrets.toml
+        nasa_token = st.secrets["NASA_ADS_API_TOKEN"]
+        try:
+            nasa_results = fetch_nasa_ads(search_term, max_results=15, token=nasa_token)
+        except Exception as e:
+            st.error(f"Error fetching NASA ADS data: {e}")
+            nasa_results = []
+
+        # Combine results
+        combined_results = pubmed_results + nasa_results
+        
+        if combined_results:
+            df = pd.DataFrame(combined_results)
             df["Summary"] = df["Abstract"].apply(summarize)
 
             st.success(f"Found {len(df)} studies.")
-            
+
             for idx, row in df.iterrows():
                 st.subheader(row["Title"])
                 st.markdown(f"**Authors:** {row['Authors']}")
+                st.markdown(f"**Source:** {row['Source']}")
                 st.markdown(f"**Summary:** {row['Summary']}")
                 with st.expander("Show Abstract"):
                     st.markdown(row["Abstract"])
                 st.markdown("---")
 
-            # Option to download results
+            # Option to download combined results
             st.download_button(
-                label="Download as CSV",
+                label="Download all results as CSV",
                 data=df.to_csv(index=False).encode('utf-8'),
-                file_name="summarized_pubmed_studies.csv",
+                file_name="summarized_studies_pubmed_nasa_ads.csv",
                 mime="text/csv"
             )
         else:

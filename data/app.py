@@ -6,7 +6,9 @@ st.set_page_config(page_title="SciSearch", layout="wide")
 # Load data
 @st.cache_data
 def load_data():
-    return pd.read_csv("structured_output.csv")
+    return pd.read_csv("merged_output.csv")
+
+
 
 df = load_data()
 
@@ -69,3 +71,16 @@ st.download_button(
     "filtered_nasa_bioscience.csv",
     "text/csv"
 )
+from pubmed import pubmed_search, pubmed_fetch_abstracts, extract_abstracts, summarize_text
+
+query = st.text_input("Search PubMed")
+
+if query:
+    with st.spinner("Searching PubMed..."):
+        pmids = pubmed_search(query)
+        xml = pubmed_fetch_abstracts(pmids)
+        abstracts = extract_abstracts(xml)
+        for abstract in abstracts:
+            summary = summarize_text(abstract)
+            st.markdown("**Summary:** " + summary)
+            st.markdown("**Original Abstract:** " + abstract)

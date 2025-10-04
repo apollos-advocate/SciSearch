@@ -1,56 +1,78 @@
 import streamlit as st
 import pandas as pd
+import requests
+from transformers import pipeline
+from xml.etree import ElementTree as ET
 
 st.set_page_config(page_title="SciSearch", layout="wide")
+st.title("🧬 SciSearch: PubMed Explorer")
+st.markdown("Search life sciences studies related to space and get AI-generated summaries.")
 
-# --- Load data ---
-@st.cache_data
-def load_data():
-    return pd.read_csv("structured_output.csv")
+# --- Summarizer ---
+summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
-df = load_data()
+def summarize(text):
+    if pd.isna(text) or len(text.strip()) == 0:
+        return ""
+    return summarizer(text[:1024], max_length=60, min_length=20, do_sample=False)[0]["summary_text"]
 
-st.title("🧬 SciSearch: Space Life Science Explorer")
-st.markdown("Search, explore, and download life science studies from PubMed related to space, microgravity, and biology.")
+# --- Fetch from PubMed ---
+def fetch_pubmed(query, max_results=10):
+    esearch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+    efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
-# --- Sidebar Filters ---
-st.sidebar.header("🔍 Filter Studies")
+    params = {"db": "pubmed", "term": query, "retmax": max_results, "retmode": "json"}
+    resp = requests.get(esearch_url, params=params)
+    pmids = resp.json().get('esearchresult', {}).get('idlist', [])
 
-filtered_df = df.copy()
+    if not pmids:
+        return []
 
-# Filter by Source (optional if you later include multiple sources like NASA)
-if "Source" in df.columns:
-    sources = df["Source"].dropna().unique()
-    selected_sources = st.sidebar.multiselect("Source", sources, default=sources)
-    filtered_df = filtered_df[filtered_df["Source"].isin(selected_sources)]
+    fetch_params = {"db": "pubmed", "id": ",".join(pmids), "retmode": "xml"}
+    data = requests.get(efetch_url, params=fetch_params).text
+    root = ET.fromstring(data)
 
-# --- Keyword Search ---
-search = st.text_input("🔎 Search summaries or titles", "")
+    records = []
+    for article in root.findall(".//PubmedArticle"):
+        title = article.findtext(".//ArticleTitle", default="N/A")
+        abstract = article.findtext(".//AbstractText", default="")
+        authors = ", ".join([
+            a.findtext("LastName", "") for a in article.findall(".//Author") if a.find("LastName") is not None
+        ])
+        records.append({
+            "Title": title,
+            "Abstract": abstract,
+            "Authors": authors,
+            "Source": "PubMed"
+        })
+    return records
 
-if search:
-    mask = (
-        df["Title"].str.contains(search, case=False, na=False) |
-        df["Summary"].str.contains(search, case=False, na=False)
-    )
-    filtered_df = filtered_df[mask]
+# --- User Search Input ---
+search_term = st.text_input("🔍 Enter your search term (e.g., 'microgravity muscle atrophy')")
 
-# --- Show Results ---
-st.write(f"### {len(filtered_df)} studies found")
+if st.button("Search PubMed"):
+    with st.spinner("Searching PubMed and summarizing results..."):
+        results = fetch_pubmed(search_term, max_results=15)
+        if results:
+            df = pd.DataFrame(results)
+            df["Summary"] = df["Abstract"].apply(summarize)
 
-for idx, row in filtered_df.iterrows():
-    st.subheader(row.get("Title", "Untitled"))
-    st.markdown(f"**Authors:** {row.get('Authors', 'N/A')}")
-    st.markdown(f"**Summary:** {row.get('Summary', 'No summary available.')}")
-    
-    with st.expander("Show Full Abstract"):
-        st.write(row.get("Abstract", "No abstract available."))
+            st.success(f"Found {len(df)} studies.")
+            
+            for idx, row in df.iterrows():
+                st.subheader(row["Title"])
+                st.markdown(f"**Authors:** {row['Authors']}")
+                st.markdown(f"**Summary:** {row['Summary']}")
+                with st.expander("Show Abstract"):
+                    st.markdown(row["Abstract"])
+                st.markdown("---")
 
-    st.markdown("---")
-
-# --- Download Button ---
-st.download_button(
-    "📥 Download Filtered Results as CSV",
-    filtered_df.to_csv(index=False).encode("utf-8"),
-    "filtered_studies.csv",
-    "text/csv"
-)
+            # Option to download results
+            st.download_button(
+                label="📥 Download as CSV",
+                data=df.to_csv(index=False).encode('utf-8'),
+                file_name="summarized_pubmed_studies.csv",
+                mime="text/csv"
+            )
+        else:
+            st.warning("No studies found for that query.")

@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import requests
-from transformers import pipeline
 from xml.etree import ElementTree as ET
 
 st.set_page_config(page_title="SciSearch", layout="wide")

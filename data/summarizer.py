@@ -3,7 +3,7 @@ from transformers import pipeline
 
 print("Script is running...")
 
-csv_files = ['micromuscle.csv', 'ntrs-export.csv', 'spaceradiation.csv', 'lifescience.csv']  
+csv_files = ['micromuscle.csv', 'ntrs-export.csv', 'spaceradiation.csv', 'lifescience.csv', 'biology.csv', 'spacebiology.csv', 'spaceradiation.csv']  
 
 
 dataframes = [pd.read_csv(f) for f in csv_files]

@@ -5,7 +5,7 @@ from transformers import pipeline
 from xml.etree import ElementTree as ET
 
 st.set_page_config(page_title="SciSearch", layout="wide")
-st.title("🧬 SciSearch: PubMed Explorer")
+st.title("SciSearch: PubMed Explorer")
 st.markdown("Search life sciences studies related to space and get AI-generated summaries.")
 
 # --- Summarizer ---
@@ -48,7 +48,7 @@ def fetch_pubmed(query, max_results=10):
     return records
 
 # --- User Search Input ---
-search_term = st.text_input("🔍 Enter your search term (e.g., 'microgravity muscle atrophy')")
+search_term = st.text_input("Enter your search term (e.g., 'microgravity muscle atrophy')")
 
 if st.button("Search PubMed"):
     with st.spinner("Searching PubMed and summarizing results..."):
@@ -69,7 +69,7 @@ if st.button("Search PubMed"):
 
             # Option to download results
             st.download_button(
-                label="📥 Download as CSV",
+                label="Download as CSV",
                 data=df.to_csv(index=False).encode('utf-8'),
                 file_name="summarized_pubmed_studies.csv",
                 mime="text/csv"

@@ -3,3 +3,4 @@ pandas
 requests
 transformers
 torch
+huggingface_hub

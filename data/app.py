@@ -4,9 +4,14 @@ import requests
 from xml.etree import ElementTree as ET
 import nltk
 
-# Download punkt tokenizer for sumy
-nltk.download('punkt')
-nltk.download('punkt_tab')
+def ensure_nltk_resource(resource_name):
+    try:
+        nltk.data.find(f'tokenizers/{resource_name}')
+    except LookupError:
+        nltk.download(resource_name)
+
+ensure_nltk_resource('punkt')
+ensure_nltk_resource('punkt_tab')
 
 st.set_page_config(page_title="SciSearch", layout="wide")
 st.title("SciSearch: PubMed Explorer")

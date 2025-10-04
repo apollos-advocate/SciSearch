@@ -8,48 +8,61 @@
 }
 
 body {
+    min-height: 100vh;
+    background: #23202e;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background: rgb(15, 242, 96);
 }
 
 .wrapper {
-    width: 420px;
-    background: rgb(189, 0, 255);
-    color: #fff;
-    padding: 40px 30px;
-    border-radius: 10px;
+    width: 520px;
+    padding: 60px 30px 40px 30px;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(31,38,135,0.37);
+    background: 
+        linear-gradient(rgba(28,27,36,0.92), rgba(28,27,36,0.97)),
+        url('SciSearch.jpg') no-repeat center center;
+    background-size: 400px auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .wrapper h1 {
     font-size: 36px;
     text-align: center;
+    font-weight: 700;
+    margin-bottom: 16px;
+    z-index: 1;
 }
 
 .wrapper .input-box {
     position: relative;
     width: 100%;
     height: 50px;
-    margin: 30px 0;
+    margin: 28px 0 16px 0;
+    z-index: 1;
 }
 
 .input-box input {
     width: 100%;
     height: 100%;
     background: transparent;
-    border: none;
+    border: 2px solid #fff;
     outline: none;
-    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 40px;
     font-size: 16px;
     color: #fff;
     padding: 20px 45px 20px 20px;
+    font-weight: 500;
 }
 
 .input-box input::placeholder {
     color: #fff;
+    font-weight: 400;
+    opacity: 0.8;
 }
 
 .input-box i {
@@ -58,13 +71,15 @@ body {
     top: 50%;
     transform: translateY(-50%);
     font-size: 20px;
+    color: #fff;
 }
 
 .wrapper .remember-forgot {
     display: flex;
     justify-content: space-between;
     font-size: 14.5px;
-    margin: -15px 0 15px;
+    margin: -8px 0 16px 0;
+    z-index: 1;
 }
 
 .remember-forgot label input {
@@ -84,25 +99,39 @@ body {
 .wrapper .btn {
     width: 100%;
     height: 45px;
-    background: #fff;
-    color: rgb(189, 0, 255);
-    border: none;
+    background: transparent;
+    color: #fff;
+    border: 2px solid #fff;
     outline: none;
     border-radius: 40px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.3s, color 0.3s;
-    margin-top: 15px;
+    margin-top: 10px;
+    z-index: 1;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 
 .wrapper .btn:hover {
-    background: rgb(109, 0, 176);
+    background: #fff;
     color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
-    cursor: pointer;
-    font-size: 16px;
-    color: #333;
+    border-color: #fff;
+    box-shadow: 0 0 10px #fff;
+}
+
+.wrapper .register-link {
+    font-size: 14.5px;
+    text-align: center;
+    margin-top: 19px;
+    z-index: 1;
+}
+
+.register-link p a {
+    color: #fff;
+    text-decoration: none;
     font-weight: 600;
 }
 
+.register-link p a:hover {
+    text-decoration: underline;
+}

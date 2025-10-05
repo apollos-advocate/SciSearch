@@ -5,7 +5,7 @@ from xml.etree import ElementTree as ET
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 import os
 
-# --- Load FLAN-T5 model for AI Q&A ---
+
 @st.cache_resource
 def load_flan_model():
     model_name = "google/flan-t5-base"
@@ -35,12 +35,12 @@ def generate_ai_answer(question, docs, chunk_size=3):
     output_ids = model.generate(**inputs, max_length=200, do_sample=True, temperature=0.7)
     return tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-# --- Load distilbart summarizer ---
+
 @st.cache_resource
 def load_distilbart_summarizer():
-    print("🔍 Loading distilbart model...")
+    print("Loading distilbart model...")
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6", device=-1)
-    print("✅ Distilbart ready.")
+    print("Distilbart ready.")
     return summarizer
 
 distilbart_summarizer = load_distilbart_summarizer()
@@ -55,7 +55,7 @@ def summarize_abstract(text):
     except:
         return "Summary unavailable"
 
-# --- PubMed fetch ---
+
 def fetch_pubmed(query, max_results=10):
     esearch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
@@ -79,7 +79,7 @@ def fetch_pubmed(query, max_results=10):
         records.append({"Title": title, "Abstract": abstract, "Authors": authors, "Source": "PubMed", "URL": url})
     return records
 
-# --- NASA ADS fetch ---
+
 def fetch_nasa_ads(query, max_results=10, token=None):
     if not token:
         return []
@@ -105,7 +105,7 @@ def fetch_nasa_ads(query, max_results=10, token=None):
         })
     return records
 
-# --- Streamlit UI ---
+
 st.set_page_config(page_title="SciSearch", layout="wide")
 st.title("SciSearch: PubMed & NASA ADS Explorer")
 

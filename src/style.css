@@ -1,137 +1,233 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+  color: #fff;
 }
 
 body {
-    min-height: 100vh;
-    background: #23202e;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  min-height: 100vh;
+  background: #23202e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .wrapper {
-    width: 520px;
-    padding: 60px 30px 40px 30px;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(31,38,135,0.37);
-    background: 
-        linear-gradient(rgba(28,27,36,0.92), rgba(28,27,36,0.97)),
-        url('SciSearch.jpg') no-repeat center center;
-    background-size: 400px auto;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  width: 520px;
+  padding: 60px 30px 40px 30px;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  background: 
+    linear-gradient(rgba(28,27,36,0.92), rgba(28,27,36,0.97)),
+    url('SciSearch.jpg') no-repeat center center;
+  background-size: 400px auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .wrapper h1 {
-    font-size: 36px;
-    text-align: center;
-    font-weight: 700;
-    margin-bottom: 16px;
-    z-index: 1;
+  font-size: 36px;
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 16px;
+  z-index: 1;
 }
 
 .wrapper .input-box {
-    position: relative;
-    width: 100%;
-    height: 50px;
-    margin: 28px 0 16px 0;
-    z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin: 28px 0 16px 0;
+  z-index: 1;
 }
 
 .input-box input {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: 2px solid #fff;
-    outline: none;
-    border-radius: 40px;
-    font-size: 16px;
-    color: #fff;
-    padding: 20px 45px 20px 20px;
-    font-weight: 500;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  outline: none;
+  border-radius: 40px;
+  font-size: 16px;
+  color: #fff;
+  padding: 20px 45px 20px 20px;
+  font-weight: 500;
+  backdrop-filter: blur(1.5px);
 }
 
 .input-box input::placeholder {
-    color: #fff;
-    font-weight: 400;
-    opacity: 0.8;
+  color: #fff;
+  font-weight: 400;
+  opacity: 0.8;
 }
 
 .input-box i {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 20px;
-    color: #fff;
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #fff;
 }
 
-.wrapper .remember-forgot {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14.5px;
-    margin: -8px 0 16px 0;
-    z-index: 1;
+.remember-forgot {
+  display: flex;
+  flex-wrap: wrap;        /* Allows wrapping for narrow screens */
+  gap: 20px;              /* Adds space between items */
+  align-items: center;
+  font-size: 14.5px;
+  margin: -8px 0 16px 0;
+  max-width: 100%;        /* Prevents overflow */
+  z-index: 1;
 }
 
 .remember-forgot label input {
-    accent-color: #fff;
-    margin-right: 3px;
+  accent-color: #4e6ef2; /* Blue checkbox */
+  margin-right: 3px;
+}
+
+.forgot-message {
+  font-weight: 600;
+  white-space: nowrap;
+  word-spacing: 1px; 
 }
 
 .remember-forgot a {
-    color: #fff;
-    text-decoration: none;
+  text-decoration: none;
 }
 
 .remember-forgot a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
-.wrapper .btn {
-    width: 100%;
-    height: 45px;
-    background: transparent;
-    color: #fff;
-    border: 2px solid #fff;
-    outline: none;
-    border-radius: 40px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 10px;
-    z-index: 1;
-    transition: background 0.3s, color 0.3s, border-color 0.3s;
+.btn {
+  width: 100%;
+  height: 45px;
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+  outline: none;
+  border-radius: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  z-index: 1;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 
-.wrapper .btn:hover {
-    background: #fff;
-    color: #fff;
-    border-color: #fff;
-    box-shadow: 0 0 10px #fff;
+.btn:hover {
+  background: #a000c8;
+  color: #fff;
+  border-color: #a000c8;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.wrapper .register-link {
-    font-size: 14.5px;
-    text-align: center;
-    margin-top: 19px;
-    z-index: 1;
+.register-link {
+  font-size: 14.5px;
+  text-align: center;
+  margin-top: 19px;
+  color: #fff;
+  z-index: 1;
 }
 
 .register-link p a {
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .register-link p a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
+}
+
+/* Modal styles */
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+  background-color: #23202e;
+  margin: 10% auto;
+  padding: 20px 30px;
+  border-radius: 18px;
+  width: 90%;
+  max-width: 430px;
+  box-shadow: 0 0 20px rgba(31, 38, 135, 0.5);
+  color: #fff;
+  position: relative;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.modal-content form input {
+  width: 100%;
+  margin-bottom: 18px;
+  height: 45px;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #fff;
+  outline: none;
+}
+
+.modal-content form input::placeholder {
+  color: #ddd;
+}
+
+.modal-content form input:focus {
+  border-color: #a000c8;
+}
+
+.modal-content form button {
+  width: 100%;
+  height: 45px;
+  background: #a000c8;
+  color: #fff;
+  border: none;
+  outline: none;
+  border-radius: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.modal-content form button:hover {
+  background: #8a00af;
+}
+
+.close {
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  position: absolute;
+  right: 20px;
+  top: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.close:hover {
+  color: #a000c8;
 }

@@ -103,10 +103,13 @@ hf_inference = InferenceApi(repo_id=hf_model_id, token=hf_token, task="text2text
 def generate_ai_answer(question, docs, max_docs=5):
     context = "\n\n".join([doc["Abstract"] or "" for doc in docs[:max_docs]])
     prompt = f"Answer the question based on the context below:\n\nContext: {context}\n\nQuestion: {question}\nAnswer:"
-    response = hf_inference(inputs=prompt)
-    if isinstance(response, str):
-        return response
-    return response.get("generated_text", "No answer generated.")
+    
+    # Use raw_response to handle plain text output
+    response = hf_inference(inputs=prompt, raw_response=True)
+    
+    if hasattr(response, "text"):
+        return response.text.strip()
+    return "No answer generated."
 
 # -------------------
 # Streamlit UI

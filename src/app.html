@@ -21,7 +21,7 @@
       </div>
       <div class="remember-forgot">
         <label><input type="checkbox" /> Remember me</label>
-        <span class="forgot-message">Need help? Contact support.</span>
+        <a href="#" id="contactBtn" class="contact-link">Need help? Contact support</a>
       </div>
       <button type="submit" class="btn">Login</button>
       <div class="register-link">
@@ -47,22 +47,46 @@
     </div>
   </div>
 
+  <!-- Contact Modal -->
+  <div id="contactModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="contactClose">&times;</span>
+      <h2>Contacts</h2>
+      <div class="contacts-list">
+        <div class="contact-box"><span class="contact-number">Solane ~ 916-619-9477</span></div>
+        <div class="contact-box"><span class="contact-number">Nikki Sethi ~ 916-582-9205</span></div>
+        <div class="contact-box"><span class="contact-number">xxx-xxx-xxxx</span></div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Register modal
     const registerModal = document.getElementById('registerModal');
     const registerBtn = document.getElementById('registerBtn');
     const registerClose = document.getElementById('registerClose');
-
     registerBtn.onclick = function (e) {
       e.preventDefault();
       registerModal.style.display = 'block';
     };
-
     registerClose.onclick = function () {
       registerModal.style.display = 'none';
     };
-
+    // Contact modal
+    const contactModal = document.getElementById('contactModal');
+    const contactBtn = document.getElementById('contactBtn');
+    const contactClose = document.getElementById('contactClose');
+    contactBtn.onclick = function (e) {
+      e.preventDefault();
+      contactModal.style.display = 'block';
+    };
+    contactClose.onclick = function () {
+      contactModal.style.display = 'none';
+    };
+    // Close modals if clicking outside
     window.onclick = function (event) {
       if (event.target == registerModal) registerModal.style.display = 'none';
+      if (event.target == contactModal) contactModal.style.display = 'none';
     };
   </script>
 </body>

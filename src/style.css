@@ -20,10 +20,10 @@ body {
   width: 520px;
   padding: 60px 30px 40px 30px;
   border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-  background: 
+  box-shadow: 0 8px 32px rgba(31,38,135,0.37);
+  background:
     linear-gradient(rgba(28,27,36,0.92), rgba(28,27,36,0.97)),
-    url('SciSearch.jpg') no-repeat center center;
+    url("SciSearch.jpg") no-repeat center center;
   background-size: 400px auto;
   position: relative;
   display: flex;
@@ -51,7 +51,7 @@ body {
   width: 100%;
   height: 100%;
   background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.28);
+  border: 2px solid rgba(255,255,255,0.28);
   outline: none;
   border-radius: 40px;
   font-size: 16px;
@@ -78,31 +78,33 @@ body {
 
 .remember-forgot {
   display: flex;
-  flex-wrap: wrap;        /* Allows wrapping for narrow screens */
-  gap: 20px;              /* Adds space between items */
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;       /* This aligns both items in the row */
   font-size: 14.5px;
   margin: -8px 0 16px 0;
-  max-width: 100%;        /* Prevents overflow */
+  max-width: 100%;
   z-index: 1;
 }
 
 .remember-forgot label input {
-  accent-color: #4e6ef2; /* Blue checkbox */
+  accent-color: #4e6ef2;
   margin-right: 3px;
+  margin-top: 6px;
 }
 
-.forgot-message {
-  font-weight: 600;
-  white-space: nowrap;
-  word-spacing: 1px; 
-}
-
-.remember-forgot a {
+.contact-link {
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
   text-decoration: none;
+  margin-top: 2px;   /* Try 10px; adjust as needed */
+  display: flex;
+  align-items: center;
 }
 
-.remember-forgot a:hover {
+.contact-link:hover {
+  color: #fff;
   text-decoration: underline;
 }
 
@@ -126,7 +128,7 @@ body {
   background: #a000c8;
   color: #fff;
   border-color: #a000c8;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 .register-link {
@@ -147,8 +149,7 @@ body {
   text-decoration: underline;
 }
 
-/* Modal styles */
-
+/* Modal styles (for both Register and Contacts) */
 .modal {
   display: none;
   position: fixed;
@@ -158,41 +159,63 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0,0,0,0.6);
 }
 
 .modal-content {
   background-color: #23202e;
-  margin: 10% auto;
-  padding: 20px 30px;
+  margin: 8% auto;
+  padding: 34px 38px 34px 38px;
   border-radius: 18px;
-  width: 90%;
   max-width: 430px;
-  box-shadow: 0 0 20px rgba(31, 38, 135, 0.5);
+  box-shadow: 0 0 20px rgba(31,38,135,0.5);
   color: #fff;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .modal-content h2 {
-  margin-bottom: 20px;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 24px;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: 0.03em;
+}
+
+.modal-content form input,
+.contact-box {
+  width: 100%;
+  margin-bottom: 18px;
+  height: 55px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  background: transparent;
+  border-radius: 40px;
+  border: 2px solid #888;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.contact-box {
+  background: transparent;
+  justify-content: flex-start;
+  border: 2px solid #888;
+}
+
+.contact-number {
+  font-size: 21px;
   font-weight: 700;
 }
 
-.modal-content form input {
-  width: 100%;
-  margin-bottom: 18px;
-  height: 45px;
-  padding: 10px 15px;
-  font-size: 16px;
-  border-radius: 40px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: transparent;
-  color: #fff;
-  outline: none;
-}
-
 .modal-content form input::placeholder {
-  color: #ddd;
+  color: #fff;
+  opacity: 0.4;
 }
 
 .modal-content form input:focus {
@@ -217,13 +240,17 @@ body {
   background: #8a00af;
 }
 
+.contacts-list {
+  width: 100%;
+}
+
 .close {
   color: #fff;
   font-size: 28px;
   font-weight: bold;
   position: absolute;
-  right: 20px;
-  top: 12px;
+  right: 22px;
+  top: 22px;
   cursor: pointer;
   user-select: none;
 }

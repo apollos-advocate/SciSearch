@@ -1,92 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login | SciSearch</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>Login/Register</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
   <div class="wrapper">
     <h1>Login</h1>
-    <form action="#">
-      <div class="input-box">
-        <input type="text" placeholder="Username" required />
-        <i class="bx bxs-user"></i>
-      </div>
-      <div class="input-box">
-        <input type="password" placeholder="Password" required />
-        <i class="bx bxs-lock-alt"></i>
-      </div>
-      <div class="remember-forgot">
-        <label><input type="checkbox" /> Remember me</label>
-        <a href="#" id="contactBtn" class="contact-link">Need help? Contact support</a>
-      </div>
-      <button type="submit" class="btn">Login</button>
-      <div class="register-link">
-        <p>
-          Don't have an account?
-          <a href="#" id="registerBtn">Register</a>
-        </p>
-      </div>
-    </form>
+    <div class="input-box">
+      <input type="text" placeholder="Username" required>
+      <i class="fa fa-user"></i>
+    </div>
+    <div class="input-box">
+      <input type="password" placeholder="Password" required>
+      <i class="fa fa-lock"></i>
+    </div>
+    <div class="remember-forgot">
+      <label><input type="checkbox"> Remember me</label>
+      <a href="#" class="contact-link">Need help? Contact support</a>
+    </div>
+    <button class="btn login-btn">Login</button>
+    <div class="register-link">
+      <p>Don't have an account? <a href="#" id="register-link">Register</a></p>
+    </div>
   </div>
-
-  <!-- Register Modal -->
-  <div id="registerModal" class="modal">
+  
+  <!-- Registration Modal -->
+  <div id="register-modal" class="modal">
     <div class="modal-content">
-      <span class="close" id="registerClose">&times;</span>
-      <h2>Register</h2>
-      <form action="#">
-        <input type="text" placeholder="Username" required />
-        <input type="email" placeholder="Email" required />
-        <input type="password" placeholder="Password" required />
-        <button type="submit" class="btn">Register</button>
+      <span class="close" id="close-register">&times;</span>
+      <h2>Sign Up</h2>
+      <form id="register-form">
+        <input type="text" placeholder="Username" required>
+        <input type="email" placeholder="Email" required>
+        <input type="password" placeholder="Password" required>
+        <button type="submit" class="btn">Sign Up</button>
       </form>
     </div>
   </div>
 
-  <!-- Contact Modal -->
-  <div id="contactModal" class="modal">
-    <div class="modal-content">
-      <span class="close" id="contactClose">&times;</span>
-      <h2>Contacts</h2>
-      <div class="contacts-list">
-        <div class="contact-box"><span class="contact-number">Solane ~ 916-619-9477</span></div>
-        <div class="contact-box"><span class="contact-number">Nikki Sethi ~ 916-582-9205</span></div>
-        <div class="contact-box"><span class="contact-number">xxx-xxx-xxxx</span></div>
-      </div>
+  <!-- Success Modal -->
+  <div id="success-modal" class="success-modal">
+    <div class="success-content">
+      <span class="success-check">&#10003;</span>
+      <h2>Success!</h2>
     </div>
   </div>
 
   <script>
-    // Register modal
-    const registerModal = document.getElementById('registerModal');
-    const registerBtn = document.getElementById('registerBtn');
-    const registerClose = document.getElementById('registerClose');
-    registerBtn.onclick = function (e) {
-      e.preventDefault();
-      registerModal.style.display = 'block';
-    };
-    registerClose.onclick = function () {
-      registerModal.style.display = 'none';
-    };
-    // Contact modal
-    const contactModal = document.getElementById('contactModal');
-    const contactBtn = document.getElementById('contactBtn');
-    const contactClose = document.getElementById('contactClose');
-    contactBtn.onclick = function (e) {
-      e.preventDefault();
-      contactModal.style.display = 'block';
-    };
-    contactClose.onclick = function () {
-      contactModal.style.display = 'none';
-    };
-    // Close modals if clicking outside
-    window.onclick = function (event) {
-      if (event.target == registerModal) registerModal.style.display = 'none';
-      if (event.target == contactModal) contactModal.style.display = 'none';
+    function showSuccess(message) {
+      const modal = document.getElementById('success-modal');
+      modal.querySelector('h2').innerText = message;
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 1800);
+    }
+    // Open registration modal
+    document.getElementById("register-link").addEventListener("click", function(event) {
+      event.preventDefault();
+      document.getElementById("register-modal").style.display = "block";
+    });
+    // Close registration modal
+    document.getElementById("close-register").addEventListener("click", function() {
+      document.getElementById("register-modal").style.display = "none";
+    });
+    // Login button
+    document.querySelector(".login-btn").addEventListener("click", function(event) {
+      event.preventDefault();
+      showSuccess("You have logged in!");
+    });
+    // Register form submission
+    document.getElementById("register-form").addEventListener("submit", function(event) {
+      event.preventDefault();
+      document.getElementById("register-modal").style.display = "none";
+      showSuccess("You have signed up!");
+    });
+    // Optional: Close modal by clicking outside
+    window.onclick = function(event) {
+      if (event.target === document.getElementById("register-modal")) {
+        document.getElementById("register-modal").style.display = "none";
+      }
     };
   </script>
 </body>

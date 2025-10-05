@@ -80,7 +80,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  align-items: center;       /* This aligns both items in the row */
+  align-items: flex-start;
   font-size: 14.5px;
   margin: -8px 0 16px 0;
   max-width: 100%;
@@ -98,11 +98,10 @@ body {
   color: #fff;
   cursor: pointer;
   text-decoration: none;
-  margin-top: 2px;   /* Try 10px; adjust as needed */
+  margin-top: 10px;
   display: flex;
   align-items: center;
 }
-
 .contact-link:hover {
   color: #fff;
   text-decoration: underline;
@@ -149,7 +148,7 @@ body {
   text-decoration: underline;
 }
 
-/* Modal styles (for both Register and Contacts) */
+/* Modal styles */
 .modal {
   display: none;
   position: fixed;
@@ -185,14 +184,11 @@ body {
   letter-spacing: 0.03em;
 }
 
-.modal-content form input,
-.contact-box {
+.modal-content form input {
   width: 100%;
   margin-bottom: 18px;
   height: 55px;
   padding: 0 20px;
-  display: flex;
-  align-items: center;
   font-size: 20px;
   font-weight: 700;
   background: transparent;
@@ -200,17 +196,6 @@ body {
   border: 2px solid #888;
   color: #fff;
   box-sizing: border-box;
-}
-
-.contact-box {
-  background: transparent;
-  justify-content: flex-start;
-  border: 2px solid #888;
-}
-
-.contact-number {
-  font-size: 21px;
-  font-weight: 700;
 }
 
 .modal-content form input::placeholder {
@@ -240,10 +225,6 @@ body {
   background: #8a00af;
 }
 
-.contacts-list {
-  width: 100%;
-}
-
 .close {
   color: #fff;
   font-size: 28px;
@@ -254,7 +235,60 @@ body {
   cursor: pointer;
   user-select: none;
 }
-
 .close:hover {
   color: #a000c8;
+}
+
+/* Success Modal */
+.success-modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 7, 20, 0.9);
+  justify-content: center;
+  align-items: center;
+}
+
+.success-content {
+  background: #23202e;
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(160,0,200,0.15);
+  animation: popIn 0.5s;
+}
+
+.success-check {
+  font-size: 48px;
+  color: #48ff8c;
+  display: block;
+  margin-bottom: 16px;
+  animation: bounce 0.7s;
+}
+
+.success-content h2 {
+  font-size: 2rem;
+  color: #fff;
+  letter-spacing: 1px;
+  margin: 0;
+  animation: fadeIn 0.6s;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  70% { transform: scale(1.07); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes bounce {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.2);}
+  100% { transform: scale(1);}
 }

@@ -2,25 +2,27 @@ import streamlit as st
 import pandas as pd
 import requests
 from xml.etree import ElementTree as ET
+import nltk
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.nlp.stemmers import Stemmer
+from sumy.summarizers.lsa import LsaSummarizer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import torch
 
-# --- Load FLAN-T5 model once ---
-@st.cache_resource
-def load_model():
-    model_name = "google/flan-t5-base"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    return tokenizer, model
+# --- NLTK setup ---
+nltk.download('punkt')
 
-tokenizer, model = load_model()
+# --- Sumy summarizer ---
+stemmer = Stemmer("english")
+lsa_summarizer = LsaSummarizer(stemmer)
 
-# --- Summarize using FLAN-T5 ---
-def summarize_text(text, max_length=150):
-    if not text.strip():
-        return ""
-    inputs = tokenizer(f"summarize: {text}", return_tensors="pt", truncation=True)
-    summary_ids = model.generate(**inputs, max_length=max_length)
-    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+def sumy_summarize(text, sentences_count=3):
+    if not text or text.strip() == "":
+        return "No abstract available"
+    parser = PlaintextParser.from_string(text, Tokenizer("english"))
+    summary_sentences = lsa_summarizer(parser.document, sentences_count)
+    return " ".join(str(sentence) for sentence in summary_sentences)
 
 # --- PubMed fetch ---
 def fetch_pubmed(query, max_results=10):
@@ -69,7 +71,23 @@ def fetch_nasa_ads(query, max_results=10, token=None):
         })
     return records
 
-# --- Generate AI answer ---
+# --- Load FLAN-T5 once ---
+@st.cache_resource
+def load_flan_model():
+    model_name = "google/flan-t5-base"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    return tokenizer, model
+
+tokenizer, model = load_flan_model()
+
+def summarize_text(text, max_length=150):
+    if not text.strip():
+        return ""
+    inputs = tokenizer(f"summarize: {text}", return_tensors="pt", truncation=True)
+    summary_ids = model.generate(**inputs, max_length=max_length)
+    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+
 def generate_ai_answer(question, docs, chunk_size=3):
     abstracts = [doc.get("Abstract", "") for doc in docs if doc.get("Abstract")]
     chunks = [abstracts[i:i+chunk_size] for i in range(0, len(abstracts), chunk_size)]
@@ -103,7 +121,7 @@ with tab1:
             token = st.secrets.get("NASA_ADS_API_TOKEN")
             all_results.extend(fetch_nasa_ads(query, max_results, token))
         for doc in all_results:
-            doc["Summary"] = summarize_text(doc.get("Abstract", ""))
+            doc["Summary"] = sumy_summarize(doc.get("Abstract", ""))
         if all_results:
             df = pd.DataFrame(all_results)
             st.success(f"Found {len(all_results)} studies.")

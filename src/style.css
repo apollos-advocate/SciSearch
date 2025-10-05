@@ -80,7 +80,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  align-items: flex-start;
+  align-items: center;        /* Change from flex-start to center for alignment */
   font-size: 14.5px;
   margin: -8px 0 16px 0;
   max-width: 100%;
@@ -98,7 +98,7 @@ body {
   color: #fff;
   cursor: pointer;
   text-decoration: none;
-  margin-top: 10px;
+  margin-top: 3.5px;
   display: flex;
   align-items: center;
 }

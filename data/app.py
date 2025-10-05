@@ -104,36 +104,44 @@ def fetch_nasa_ads(query, max_results=20, token=None):
 # -------------------
 # Hugging Face AI
 # -------------------
-from huggingface_hub import InferenceClient
+import requests
+import streamlit as st
 
 def generate_ai_answer(question, docs, max_docs=5):
     # combine abstracts for context
-    context = "\n\n".join(
-        [doc.get("Abstract", "") for doc in docs[:max_docs] if doc.get("Abstract")]
-    )
-    if not context.strip():
-        return "no abstracts found to answer that question."
+    context = "\n\n".join([doc.get("Abstract", "") or "" for doc in docs[:max_docs]])
+    prompt = f"Answer the question based on the context below:\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
 
-    prompt = f"""answer the following question using the context below.
-be concise and clear. if there's not enough info, say so.
-
-context:
-{context}
-
-question: {question}
-answer:"""
-
+    # get token
     hf_token = st.secrets.get("HF_API_TOKEN")
     if not hf_token:
-        return "hf api token not found! add it to .streamlit/secrets.toml."
+        return "HF API token not found! Add it to secrets."
 
+    # define model + payload
+    model_id = "google/flan-t5-large"
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 200}}
+
+    # make API call
     try:
-        # use InferenceClient instead of InferenceApi
-        client = InferenceClient("google/flan-t5-large", token=hf_token)
-        response = client.text_generation(prompt, max_new_tokens=300)
-        return response.strip() if response else "no answer generated."
+        res = requests.post(
+            f"https://api-inference.huggingface.co/models/{model_id}",
+            headers=headers,
+            json=payload,
+        )
+        res.raise_for_status()
+        data = res.json()
+
+        # parse result
+        if isinstance(data, list) and len(data) > 0 and "generated_text" in data[0]:
+            return data[0]["generated_text"].strip()
+        else:
+            return f"no answer generated — raw response: {data}"
     except Exception as e:
-        return f"ai generation failed: {e}"
+        import traceback
+        return f"AI generation failed:\n{traceback.format_exc()}"
+
+
 
 
 # -------------------

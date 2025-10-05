@@ -4,3 +4,5 @@ requests
 sumy
 nltk
 huggingface_hub
+transformers
+torch

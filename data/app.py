@@ -9,9 +9,17 @@ from sumy.nlp.stemmers import Stemmer
 from sumy.summarizers.lsa import LsaSummarizer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
+import os
 
 # --- NLTK setup ---
-nltk.download('punkt')
+nltk_data_path = '/home/appuser/nltk_data'
+os.environ['NLTK_DATA'] = nltk_data_path
+if not os.path.exists(nltk_data_path):
+    os.makedirs(nltk_data_path)
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', download_dir=nltk_data_path)
 
 # --- Sumy summarizer ---
 stemmer = Stemmer("english")
@@ -35,7 +43,10 @@ def fetch_pubmed(query, max_results=10):
         return []
     fetch_params = {"db": "pubmed", "id": ",".join(pmids), "retmode": "xml"}
     data = requests.get(efetch_url, params=fetch_params).text
-    root = ET.fromstring(data)
+    try:
+        root = ET.fromstring(data)
+    except ET.ParseError:
+        return []
     records = []
     for article in root.findall(".//PubmedArticle"):
         title = article.findtext(".//ArticleTitle", default="N/A")
@@ -71,7 +82,7 @@ def fetch_nasa_ads(query, max_results=10, token=None):
         })
     return records
 
-# --- Load FLAN-T5 once ---
+# --- Load FLAN-T5 model ---
 @st.cache_resource
 def load_flan_model():
     model_name = "google/flan-t5-base"

@@ -3,3 +3,4 @@ pandas
 requests
 sumy
 nltk
+huggingface_hub

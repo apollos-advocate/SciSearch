@@ -104,22 +104,37 @@ def fetch_nasa_ads(query, max_results=20, token=None):
 # -------------------
 # Hugging Face AI
 # -------------------
+from huggingface_hub import InferenceClient
+
 def generate_ai_answer(question, docs, max_docs=5):
-    context = "\n\n".join([doc["Abstract"] or "" for doc in docs[:max_docs]])
-    prompt = f"Answer the question based on the context below:\n\nContext: {context}\n\nQuestion: {question}\nAnswer:"
-    
+    # combine abstracts for context
+    context = "\n\n".join(
+        [doc.get("Abstract", "") for doc in docs[:max_docs] if doc.get("Abstract")]
+    )
+    if not context.strip():
+        return "no abstracts found to answer that question."
+
+    prompt = f"""answer the following question using the context below.
+be concise and clear. if there's not enough info, say so.
+
+context:
+{context}
+
+question: {question}
+answer:"""
+
     hf_token = st.secrets.get("HF_API_TOKEN")
     if not hf_token:
-        return "HF API token not found! Add it to secrets."
-    
-    hf_model_id = "google/flan-t5-large"
-    hf_inference = InferenceApi(repo_id=hf_model_id, token=hf_token, task="text2text-generation")
-    
+        return "hf api token not found! add it to .streamlit/secrets.toml."
+
     try:
-        response = hf_inference(inputs=prompt, raw_response=True)
-        return response.text.strip() if hasattr(response, "text") else "No answer generated."
+        # use InferenceClient instead of InferenceApi
+        client = InferenceClient("google/flan-t5-large", token=hf_token)
+        response = client.text_generation(prompt, max_new_tokens=300)
+        return response.strip() if response else "no answer generated."
     except Exception as e:
-        return f"AI generation failed: {e}"
+        return f"ai generation failed: {e}"
+
 
 # -------------------
 # Streamlit UI

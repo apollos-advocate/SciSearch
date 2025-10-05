@@ -1,38 +1,47 @@
+import os
 import streamlit as st
 import pandas as pd
 import requests
 from xml.etree import ElementTree as ET
 import nltk
 from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
+from sumy.nlp.tokenizers import Tokenizer as SumyTokenizer
 from sumy.nlp.stemmers import Stemmer
 from sumy.summarizers.lsa import LsaSummarizer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import torch
-import os
 
-# --- NLTK setup ---
-nltk_data_path = '/home/appuser/nltk_data'
-os.environ['NLTK_DATA'] = nltk_data_path
-if not os.path.exists(nltk_data_path):
-    os.makedirs(nltk_data_path)
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt', download_dir=nltk_data_path)
+# ---------------- NLTK setup ----------------
+nltk_data_dir = "/home/appuser/nltk_data"
+os.environ["NLTK_DATA"] = nltk_data_dir
+if not os.path.exists(nltk_data_dir):
+    os.makedirs(nltk_data_dir)
 
-# --- Sumy summarizer ---
+# download required punkt resources
+nltk.download("punkt", download_dir=nltk_data_dir, quiet=True)
+nltk.download("punkt_tab", download_dir=nltk_data_dir, quiet=True)
+
+# monkey patch sumy tokenizer to avoid punkt_tab errors
+_orig_get_sentence_tokenizer = SumyTokenizer._get_sentence_tokenizer
+def _patched_get_sentence_tokenizer(self, tokenizer_language):
+    try:
+        return _orig_get_sentence_tokenizer(self, tokenizer_language)
+    except LookupError:
+        from nltk.tokenize.punkt import PunktSentenceTokenizer
+        return PunktSentenceTokenizer()
+SumyTokenizer._get_sentence_tokenizer = _patched_get_sentence_tokenizer
+
+# ---------------- Sumy summarizer ----------------
 stemmer = Stemmer("english")
 lsa_summarizer = LsaSummarizer(stemmer)
 
 def sumy_summarize(text, sentences_count=3):
     if not text or text.strip() == "":
         return "No abstract available"
-    parser = PlaintextParser.from_string(text, Tokenizer("english"))
+    parser = PlaintextParser.from_string(text, SumyTokenizer("english"))
     summary_sentences = lsa_summarizer(parser.document, sentences_count)
     return " ".join(str(sentence) for sentence in summary_sentences)
 
-# --- PubMed fetch ---
+# ---------------- PubMed fetch ----------------
 def fetch_pubmed(query, max_results=10):
     esearch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
@@ -56,7 +65,7 @@ def fetch_pubmed(query, max_results=10):
         records.append({"Title": title, "Abstract": abstract, "Authors": authors, "Source": "PubMed", "URL": url})
     return records
 
-# --- NASA ADS fetch ---
+# ---------------- NASA ADS fetch ----------------
 def fetch_nasa_ads(query, max_results=10, token=None):
     if not token:
         return []
@@ -82,7 +91,7 @@ def fetch_nasa_ads(query, max_results=10, token=None):
         })
     return records
 
-# --- Load FLAN-T5 model ---
+# ---------------- Load FLAN-T5 model ----------------
 @st.cache_resource
 def load_flan_model():
     model_name = "google/flan-t5-base"
@@ -112,7 +121,7 @@ def generate_ai_answer(question, docs, chunk_size=3):
     output_ids = model.generate(**inputs, max_length=200, do_sample=True, temperature=0.7)
     return tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-# --- Streamlit UI ---
+# ---------------- Streamlit UI ----------------
 st.set_page_config(page_title="SciSearch", layout="wide")
 st.title("SciSearch: PubMed & NASA ADS Explorer")
 

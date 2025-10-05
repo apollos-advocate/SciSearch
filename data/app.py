@@ -5,24 +5,23 @@ from xml.etree import ElementTree as ET
 import nltk
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
-from sumy.nlp.stemmers import Stemmer
 from sumy.summarizers.lsa import LsaSummarizer
-
-# Transformers
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import torch
+import os
 
-# --- Setup nltk ---
+# --- NLTK setup ---
 def ensure_nltk_resource(resource_name):
     try:
         nltk.data.find(f'tokenizers/{resource_name}')
     except LookupError:
-        nltk.download(resource_name)
+        nltk.download(resource_name, download_dir='/home/appuser/nltk_data')
 
+os.environ["NLTK_DATA"] = '/home/appuser/nltk_data'
 ensure_nltk_resource('punkt')
 
 # --- Summarizer ---
 summarizer = LsaSummarizer()
-
 def summarize(text, sentences_count=3):
     if not text or text.strip() == "":
         return ""
@@ -30,7 +29,7 @@ def summarize(text, sentences_count=3):
     summary = summarizer(parser.document, sentences_count)
     return " ".join(str(sentence) for sentence in summary)
 
-# --- Fetch PubMed ---
+# --- PubMed Fetch ---
 def fetch_pubmed(query, max_results=10):
     esearch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
@@ -57,9 +56,9 @@ def fetch_pubmed(query, max_results=10):
         })
     return records
 
-# --- Fetch NASA ADS ---
+# --- NASA ADS Fetch ---
 def fetch_nasa_ads(query, max_results=10, token=None):
-    if token is None:
+    if not token:
         return []
     url = "https://api.adsabs.harvard.edu/v1/search/query"
     headers = {"Authorization": f"Bearer {token}"}
@@ -88,27 +87,33 @@ def fetch_nasa_ads(query, max_results=10, token=None):
         })
     return records
 
-# --- Load FLAN-T5 locally ---
+# --- Load FLAN-T5 Model ---
 @st.cache_resource
-def load_flant5(model_name="google/flan-t5-small"):
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+def load_flan_model():
+    model_id = "google/flan-t5-base"
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
     return tokenizer, model
 
-tokenizer, model = load_flant5("google/flan-t5-large")
+tokenizer, model = load_flan_model()
 
+def summarize_text(text, max_length=150):
+    inputs = tokenizer(f"summarize: {text}", return_tensors="pt", truncation=True)
+    summary_ids = model.generate(**inputs, max_length=max_length)
+    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
-def generate_ai_answer(question, docs, max_docs=5):
-    context = "\n\n".join([doc.get("Abstract", "") for doc in docs[:max_docs] if doc.get("Abstract")])
-    if not context:
-        return "No abstracts available to answer the question."
-
-    prompt = f"Answer the question based on the context below.\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
-    
+def generate_ai_answer(question, docs, chunk_size=3):
+    abstracts = [doc.get("Abstract", "") for doc in docs if doc.get("Abstract", "")]
+    chunks = [abstracts[i:i+chunk_size] for i in range(0, len(abstracts), chunk_size)]
+    chunk_summaries = []
+    for chunk in chunks:
+        combined = "\n\n".join(chunk)
+        chunk_summaries.append(summarize_text(combined))
+    context = "\n\n".join(chunk_summaries)
+    prompt = f"Answer the question based on the context below:\n\nContext: {context}\n\nQuestion: {question}\nAnswer:"
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
-    outputs = model.generate(**inputs, max_new_tokens=256)
-    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return answer
+    output_ids = model.generate(**inputs, max_length=200, do_sample=True, temperature=0.7)
+    return tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="SciSearch", layout="wide")
@@ -131,10 +136,8 @@ with tab1:
             with st.spinner("Fetching NASA ADS studies..."):
                 nasa_token = st.secrets.get("NASA_ADS_API_TOKEN")
                 all_results.extend(fetch_nasa_ads(query, max_results, nasa_token))
-
         for doc in all_results:
             doc["Summary"] = summarize(doc.get("Abstract", ""))
-
         if all_results:
             st.success(f"Found {len(all_results)} studies.")
             df = pd.DataFrame(all_results)
@@ -149,7 +152,6 @@ with tab1:
                 with st.expander("Show Abstract"):
                     st.write(row["Abstract"])
                 st.markdown("---")
-
             st.download_button(
                 label="Download results as CSV",
                 data=df.to_csv(index=False).encode("utf-8"),
@@ -162,7 +164,6 @@ with tab1:
 with tab2:
     st.header("AI Overview")
     question = st.text_area("Ask a question related to your search:")
-
     if st.button("Generate AI Answer"):
         if not question.strip():
             st.warning("Please enter a question.")

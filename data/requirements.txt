@@ -4,5 +4,5 @@ requests
 sumy
 nltk
 huggingface_hub
-transformers
-torch
+torch>=2.0.0
+transformers>=4.40.0

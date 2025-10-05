@@ -1,97 +1,11 @@
-import os
 import streamlit as st
 import pandas as pd
 import requests
 from xml.etree import ElementTree as ET
-import nltk
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer as SumyTokenizer
-from sumy.nlp.stemmers import Stemmer
-from sumy.summarizers.lsa import LsaSummarizer
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+import os
 
-# ---------------- NLTK setup ----------------
-nltk_data_dir = "/home/appuser/nltk_data"
-os.environ["NLTK_DATA"] = nltk_data_dir
-if not os.path.exists(nltk_data_dir):
-    os.makedirs(nltk_data_dir)
-
-# download required punkt resources
-nltk.download("punkt", download_dir=nltk_data_dir, quiet=True)
-nltk.download("punkt_tab", download_dir=nltk_data_dir, quiet=True)
-
-# monkey patch sumy tokenizer to avoid punkt_tab errors
-_orig_get_sentence_tokenizer = SumyTokenizer._get_sentence_tokenizer
-def _patched_get_sentence_tokenizer(self, tokenizer_language):
-    try:
-        return _orig_get_sentence_tokenizer(self, tokenizer_language)
-    except LookupError:
-        from nltk.tokenize.punkt import PunktSentenceTokenizer
-        return PunktSentenceTokenizer()
-SumyTokenizer._get_sentence_tokenizer = _patched_get_sentence_tokenizer
-
-# ---------------- Sumy summarizer ----------------
-stemmer = Stemmer("english")
-lsa_summarizer = LsaSummarizer(stemmer)
-
-def sumy_summarize(text, sentences_count=3):
-    if not text or text.strip() == "":
-        return "No abstract available"
-    parser = PlaintextParser.from_string(text, SumyTokenizer("english"))
-    summary_sentences = lsa_summarizer(parser.document, sentences_count)
-    return " ".join(str(sentence) for sentence in summary_sentences)
-
-# ---------------- PubMed fetch ----------------
-def fetch_pubmed(query, max_results=10):
-    esearch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
-    efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
-    params = {"db": "pubmed", "term": query, "retmax": max_results, "retmode": "json"}
-    resp = requests.get(esearch_url, params=params)
-    pmids = resp.json().get("esearchresult", {}).get("idlist", [])
-    if not pmids:
-        return []
-    fetch_params = {"db": "pubmed", "id": ",".join(pmids), "retmode": "xml"}
-    data = requests.get(efetch_url, params=fetch_params).text
-    try:
-        root = ET.fromstring(data)
-    except ET.ParseError:
-        return []
-    records = []
-    for article in root.findall(".//PubmedArticle"):
-        title = article.findtext(".//ArticleTitle", default="N/A")
-        abstract = article.findtext(".//AbstractText", default="")
-        authors = ", ".join([a.findtext("LastName", "") for a in article.findall(".//Author") if a.find("LastName") is not None])
-        url = f"https://pubmed.ncbi.nlm.nih.gov/{article.findtext('.//PMID')}"
-        records.append({"Title": title, "Abstract": abstract, "Authors": authors, "Source": "PubMed", "URL": url})
-    return records
-
-# ---------------- NASA ADS fetch ----------------
-def fetch_nasa_ads(query, max_results=10, token=None):
-    if not token:
-        return []
-    url = "https://api.adsabs.harvard.edu/v1/search/query"
-    headers = {"Authorization": f"Bearer {token}"}
-    params = {"q": query, "fl": "title,author,abstract,pubdate,bibcode,doctype", "rows": max_results, "format": "json"}
-    resp = requests.get(url, headers=headers, params=params)
-    if resp.status_code != 200:
-        st.error(f"NASA ADS API error: {resp.status_code} - {resp.text}")
-        return []
-    data = resp.json()
-    records = []
-    for doc in data.get("response", {}).get("docs", []):
-        bibcode = doc.get("bibcode", "")
-        url = f"https://ui.adsabs.harvard.edu/abs/{bibcode}/abstract"
-        records.append({
-            "Title": doc.get("title", [""])[0],
-            "Authors": ", ".join(doc.get("author", [])),
-            "Abstract": doc.get("abstract", ""),
-            "PubDate": doc.get("pubdate", ""),
-            "Source": "NASA ADS",
-            "URL": url
-        })
-    return records
-
-# ---------------- Load FLAN-T5 model ----------------
+# --- Load FLAN-T5 model for AI Q&A ---
 @st.cache_resource
 def load_flan_model():
     model_name = "google/flan-t5-base"
@@ -121,7 +35,77 @@ def generate_ai_answer(question, docs, chunk_size=3):
     output_ids = model.generate(**inputs, max_length=200, do_sample=True, temperature=0.7)
     return tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-# ---------------- Streamlit UI ----------------
+# --- Load distilbart summarizer ---
+@st.cache_resource
+def load_distilbart_summarizer():
+    print("🔍 Loading distilbart model...")
+    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6", device=-1)
+    print("✅ Distilbart ready.")
+    return summarizer
+
+distilbart_summarizer = load_distilbart_summarizer()
+
+def summarize_abstract(text):
+    if pd.isna(text) or len(text.strip()) == 0:
+        return "No abstract available"
+    text = str(text)[:1024]
+    try:
+        summary = distilbart_summarizer(text, max_length=60, min_length=20, do_sample=False)
+        return summary[0]["summary_text"]
+    except:
+        return "Summary unavailable"
+
+# --- PubMed fetch ---
+def fetch_pubmed(query, max_results=10):
+    esearch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+    efetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+    params = {"db": "pubmed", "term": query, "retmax": max_results, "retmode": "json"}
+    resp = requests.get(esearch_url, params=params)
+    pmids = resp.json().get("esearchresult", {}).get("idlist", [])
+    if not pmids:
+        return []
+    fetch_params = {"db": "pubmed", "id": ",".join(pmids), "retmode": "xml"}
+    data = requests.get(efetch_url, params=fetch_params).text
+    try:
+        root = ET.fromstring(data)
+    except ET.ParseError:
+        return []
+    records = []
+    for article in root.findall(".//PubmedArticle"):
+        title = article.findtext(".//ArticleTitle", default="N/A")
+        abstract = article.findtext(".//AbstractText", default="")
+        authors = ", ".join([a.findtext("LastName", "") for a in article.findall(".//Author") if a.find("LastName") is not None])
+        url = f"https://pubmed.ncbi.nlm.nih.gov/{article.findtext('.//PMID')}"
+        records.append({"Title": title, "Abstract": abstract, "Authors": authors, "Source": "PubMed", "URL": url})
+    return records
+
+# --- NASA ADS fetch ---
+def fetch_nasa_ads(query, max_results=10, token=None):
+    if not token:
+        return []
+    url = "https://api.adsabs.harvard.edu/v1/search/query"
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"q": query, "fl": "title,author,abstract,pubdate,bibcode,doctype", "rows": max_results, "format": "json"}
+    resp = requests.get(url, headers=headers, params=params)
+    if resp.status_code != 200:
+        st.error(f"NASA ADS API error: {resp.status_code} - {resp.text}")
+        return []
+    data = resp.json()
+    records = []
+    for doc in data.get("response", {}).get("docs", []):
+        bibcode = doc.get("bibcode", "")
+        url = f"https://ui.adsabs.harvard.edu/abs/{bibcode}/abstract"
+        records.append({
+            "Title": doc.get("title", [""])[0],
+            "Authors": ", ".join(doc.get("author", [])),
+            "Abstract": doc.get("abstract", ""),
+            "PubDate": doc.get("pubdate", ""),
+            "Source": "NASA ADS",
+            "URL": url
+        })
+    return records
+
+# --- Streamlit UI ---
 st.set_page_config(page_title="SciSearch", layout="wide")
 st.title("SciSearch: PubMed & NASA ADS Explorer")
 
@@ -140,8 +124,10 @@ with tab1:
         if "NASA ADS" in sources:
             token = st.secrets.get("NASA_ADS_API_TOKEN")
             all_results.extend(fetch_nasa_ads(query, max_results, token))
+
         for doc in all_results:
-            doc["Summary"] = sumy_summarize(doc.get("Abstract", ""))
+            doc["Summary"] = summarize_abstract(doc.get("Abstract", ""))
+
         if all_results:
             df = pd.DataFrame(all_results)
             st.success(f"Found {len(all_results)} studies.")
@@ -173,6 +159,7 @@ with tab2:
             if "NASA ADS" in sources:
                 token = st.secrets.get("NASA_ADS_API_TOKEN")
                 combined_docs.extend(fetch_nasa_ads(query, max_results, token))
+
             if combined_docs:
                 answer = generate_ai_answer(question, combined_docs)
                 st.markdown("### AI-generated Answer")
